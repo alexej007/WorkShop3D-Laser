@@ -3,54 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workshop Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); margin: 0; padding: 15px; }
-        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card img { width: 100%; border-radius: 8px; height: 120px; object-fit: cover; }
-        .card h3 { font-size: 14px; margin: 10px 0 5px; }
-        .card p { font-size: 16px; font-weight: bold; color: var(--tg-theme-link-color); margin: 0; }
-        .btn { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; padding: 8px 15px; border-radius: 6px; margin-top: 10px; cursor: pointer; width: 100%; }
-        .badge { background: #ff4d4d; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; position: absolute; margin-left: -20px; }
+        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 10px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: var(--tg-theme-secondary-bg-color); padding: 10px; border-radius: 10px; text-align: center; }
+        .btn { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h2>Мастерская 3D и Лазера</h2>
-    <div class="container">
-        <div class="card">
-            <img src="https://via.placeholder.com/150/000000/FFFFFF?text=3D+Printer" alt="3D">
-            <h3>Органайзер (3D)</h3>
-            <p>750 ₽</p>
-            <button class="btn" onclick="addToCart(1, 'Органайзер', 750)">В корзину</button>
-        </div>
-        <div class="card">
-            <img src="https://via.placeholder.com/150/555555/FFFFFF?text=Laser" alt="Laser">
-            <h3>Брелок (Лазер)</h3>
-            <p>300 ₽</p>
-            <button class="btn" onclick="addToCart(2, 'Брелок', 300)">В корзину</button>
-        </div>
+    <div id="catalog" class="container">
+        <p>Загрузка товаров...</p>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем приложение на весь экран
+        tg.expand();
 
-        let cart = [];
+        // 1. Читаем данные из ссылки (URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataRaw = urlParams.get('data');
+        
+        if (dataRaw) {
+            const products = JSON.parse(decodeURIComponent(dataRaw));
+            const catalog = document.getElementById('catalog');
+            catalog.innerHTML = ''; // Очищаем текст загрузки
 
-        function addToCart(id, name, price) {
-            cart.push({id, name, price});
-            tg.MainButton.text = Оформить заказ (${cart.length});
-            tg.MainButton.show();
+            // 2. Рисуем карточки для каждого товара из базы
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = 
+                    <h3>${p.name}</h3>
+                    <p>${p.price} ₽</p>
+                    <button class="btn" onclick="order(${p.id}, '${p.name}', ${p.price})">Купить</button>
+                ;
+                catalog.appendChild(card);
+            });
         }
 
-        // Когда пользователь нажимает на главную кнопку Telegram "Оформить заказ"
-        tg.onEvent('mainButtonClicked', function() {
-            // Отправляем данные из Mini App в бот
-            tg.sendData(JSON.stringify(cart));
+        function order(id, name, price) {
+            tg.sendData(JSON.stringify([{id, name, price}]));
             tg.close();
-        });
+        }
     </script>
 </body>
 </html>
